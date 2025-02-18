@@ -1,12 +1,11 @@
-import mysql.connector
-from mysql.connector import pooling
+import mariadb
 
 # Configura la connexió a MariaDB
 db_config = {
     'host': 'mariadb',
-    'user': 'david',
-    'password': '1357924680',
-    'database': 'reserves',
+    'user': 'appuser',
+    'password': 'maria-DB_Appuser',
+    'database': 'bestMasters',
     'collation': 'utf8mb4_general_ci'
 }
 
