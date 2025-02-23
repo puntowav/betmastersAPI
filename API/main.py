@@ -17,8 +17,8 @@ def crear_bet(bet: Bet):
     cursor = conn.cursor()
     try:
         cursor.execute(
-            "INSERT INTO bets (id, match, team, bet, win) VALUES (%s, %s, %s, %s, %s)",
-            (bet.id, bet.match, bet.team, bet.bet, bet.win),
+            "INSERT INTO bets (id, partido, team, bet, win) VALUES (%s, %s, %s, %s, %s)",
+            (bet.id, bet.partido, bet.team, bet.bet, bet.win),
         )
         conn.commit()
     except Exception as e:
@@ -62,8 +62,8 @@ def modificar_bet(bet_id: int, nueva_bet: Bet):
     cursor = conn.cursor()
     try:
         cursor.execute(
-            "UPDATE bets SET match = %s, team = %s, bet = %s, win = %s WHERE id = %s",
-            (nueva_bet.match, nueva_bet.team, nueva_bet.bet, nueva_bet.win, bet_id),
+            "UPDATE bets SET partido = %s, team = %s, bet = %s, win = %s WHERE id = %s",
+            (nueva_bet.partido, nueva_bet.team, nueva_bet.bet, nueva_bet.win, bet_id),
         )
         conn.commit()
         if cursor.rowcount == 0:
