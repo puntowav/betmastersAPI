@@ -3,7 +3,7 @@ from datetime import date
 
 class Bet(BaseModel):
     id: int
-    match: str
+    partido: str
     team: str
     bet: str
     win: str
