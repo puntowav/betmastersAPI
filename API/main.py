@@ -1,43 +1,24 @@
-#https://fastapi.tiangolo.com/#installation
 from fastapi import FastAPI, HTTPException
 from db import get_db_connection
-from models import Usuari, Material, Reserva
-# from fastapi.middleware.cors import CORSMiddleware
-
-import time
-
-DELAY_TIME=3
+from models import Bet  # Asegúrate de tener la clase Bet en models.py
 
 app = FastAPI()
-# Configura els origens permesos
-# origins = [
-#     "http://127.0.0.1:8443",  # Per React o altres frameworks en desenvolupament
-#     "http://reservesapi:8443",  # Si accedeixes des del mateix servidor
-#     "*",  # des de tot arreu.
-# ]
 
-# Afegeix el middleware de CORS
-# app.add_middleware(
-#     CORSMiddleware,
-#     allow_origins=origins,  # Origines permesos
-#     allow_credentials=True, # Permetre cookies i autenticació
-#     allow_methods=["*"],    # Permetre tots els mètodes HTTP (GET, POST, PUT, DELETE, etc.)
-#     allow_headers=["*"],    # Permetre tots els encapçalaments
-# )
+# ... aquí irían tus otros endpoints (usuaris, materials, etc.) ...
 
-@app.get("/")
-def home():
-    return {"message": "API RESERVES, amb FastAPI i MariaDB sense routers"}
+# -------------------
+#     BETS CRUD
+# -------------------
 
-# CRUD per a Usuaris
-@app.post("/usuaris/")
-def crear_usuari(usuari: Usuari):
+# Crear apuesta (POST)
+@app.post("/bets/")
+def crear_bet(bet: Bet):
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
         cursor.execute(
-            "INSERT INTO usuaris (id, nom, rol, password) VALUES (%s, %s, %s, %s)",
-            (usuari.id, usuari.nom, usuari.rol, usuari.password),
+            "INSERT INTO bets (id, match, team, bet, win) VALUES (%s, %s, %s, %s, %s)",
+            (bet.id, bet.match, bet.team, bet.bet, bet.win),
         )
         conn.commit()
     except Exception as e:
@@ -46,205 +27,69 @@ def crear_usuari(usuari: Usuari):
     finally:
         cursor.close()
         conn.close()
-    return {"message": "Usuari creat correctament"}
+    return {"message": "Apuesta creada correctamente"}
 
-@app.get("/usuaris/{id}")
-def obtenir_usuari(id: int):
+# Obtener todas las apuestas (GET)
+@app.get("/bets/")
+def obtener_todas_las_bets():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM usuaris WHERE id = %s", (id,))
-    usuari = cursor.fetchone()
+    cursor.execute("SELECT * FROM bets")
+    bets = cursor.fetchall()
     cursor.close()
     conn.close()
-    if not usuari:
-        raise HTTPException(status_code=404, detail="Usuari no trobat")
-    return usuari
+    return bets
 
-@app.get("/login/{usuari}")
-def obtenir_usuari(usuari: str):
+# Obtener una apuesta por ID (GET)
+@app.get("/bets/{bet_id}")
+def obtener_bet(bet_id: int):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT id,nom,rol FROM usuaris WHERE nom = %s", (usuari,))    
-    usuari = cursor.fetchone()
+    cursor.execute("SELECT * FROM bets WHERE id = %s", (bet_id,))
+    bet = cursor.fetchone()
     cursor.close()
     conn.close()
-    if not usuari:
-        raise HTTPException(status_code=404, detail="Usuari no trobat")
-    return usuari
+    if not bet:
+        raise HTTPException(status_code=404, detail="Apuesta no encontrada")
+    return bet
 
-#1. Afegir Material (POST)
-@app.post("/materials/")
-def crear_material(material: Material):
+# Modificar apuesta (PUT)
+# Si solo quieres aumentar la cantidad del campo 'bet', podrías usar un UPDATE sumando.
+# Por ejemplo: "UPDATE bets SET bet = bet + %s WHERE id = %s"
+@app.put("/bets/{bet_id}")
+def modificar_bet(bet_id: int, nueva_bet: Bet):
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
         cursor.execute(
-            "INSERT INTO materials (id, descripcio, imatge) VALUES (%s, %s, %s)",
-            (material.id, material.descripcio, material.imatge),
-        )
-        conn.commit()
-    except Exception as e:
-        conn.rollback()
-        raise HTTPException(status_code=400, detail=str(e))
-    finally:
-        cursor.close()
-        conn.close()
-    return {"message": "Material creat correctament"}
-
-
-#2. Obtenir Material per ID (GET)
-@app.get("/materials/{id}")
-def obtenir_material(id: int):
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM materials WHERE id = %s", (id,))
-    material = cursor.fetchone()
-    cursor.close()
-    conn.close()
-    if not material:
-        raise HTTPException(status_code=404, detail="Material no trobat")
-    return material
-
-#3. Obtenir tots els Materials (GET)
-@app.get("/materials/")
-def obtenir_tots_materials():
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM materials")
-    materials = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    return materials
-
-#4. Modificar Material (PUT)
-@app.put("/materials/{id}")
-def modificar_material(id: int, material: Material):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    try:
-        cursor.execute(
-            "UPDATE materials SET descripcio = %s, imatge = %s WHERE id = %s",
-            (material.descripcio, material.imatge, id),
+            "UPDATE bets SET match = %s, team = %s, bet = %s, win = %s WHERE id = %s",
+            (nueva_bet.match, nueva_bet.team, nueva_bet.bet, nueva_bet.win, bet_id),
         )
         conn.commit()
         if cursor.rowcount == 0:
-            raise HTTPException(status_code=404, detail="Material no trobat")
+            raise HTTPException(status_code=404, detail="Apuesta no encontrada")
     except Exception as e:
         conn.rollback()
         raise HTTPException(status_code=400, detail=str(e))
     finally:
         cursor.close()
         conn.close()
-    return {"message": "Material actualitzat correctament"}
+    return {"message": "Apuesta modificada correctamente"}
 
-#5. Eliminar Material (DELETE)
-@app.delete("/materials/{id}")
-def eliminar_material(id: int):
+# Eliminar apuesta (DELETE)
+@app.delete("/bets/{bet_id}")
+def eliminar_bet(bet_id: int):
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
-        cursor.execute("DELETE FROM materials WHERE id = %s", (id,))
+        cursor.execute("DELETE FROM bets WHERE id = %s", (bet_id,))
         conn.commit()
         if cursor.rowcount == 0:
-            raise HTTPException(status_code=404, detail="Material no trobat")
+            raise HTTPException(status_code=404, detail="Apuesta no encontrada")
     except Exception as e:
         conn.rollback()
         raise HTTPException(status_code=400, detail=str(e))
     finally:
         cursor.close()
         conn.close()
-    return {"message": "Material eliminat correctament"}
-
-#-----------------------------------------------------------------------
-#   RESERVES
-#-----------------------------------------------------------------------
-
-#1. Afegir Reserva (POST)
-@app.post("/reserves/")
-def crear_reserva(reserva: Reserva):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    try:
-        cursor.execute(
-            "INSERT INTO reserves (idusuari, idmaterial, datareserva, datafinal) VALUES (%s, %s, %s, %s)",
-            (reserva.idusuari, reserva.idmaterial, reserva.datareserva, reserva.datafinal),
-        )
-        conn.commit()
-    except Exception as e:
-        conn.rollback()
-        raise HTTPException(status_code=400, detail=str(e))
-    finally:
-        cursor.close()
-        conn.close()
-    return {"message": "Reserva creada correctament"}
-
-#2. Obtenir Reserva per ID (GET)
-@app.get("/reserves/{idusuari}/{idmaterial}/{datareserva}")
-def obtenir_reserva(idusuari: int, idmaterial: int, datareserva: str):
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute(
-        "SELECT * FROM reserves WHERE idusuari = %s AND idmaterial = %s AND datareserva = %s",
-        (idusuari, idmaterial, datareserva),
-    )
-    reserva = cursor.fetchone()
-    cursor.close()
-    conn.close()
-    if not reserva:
-        raise HTTPException(status_code=404, detail="Reserva no trobada")
-    return reserva
-
-#3. Obtenir totes les Reserves d'un Usuari (GET)
-@app.get("/reserves/usuari/{idusuari}")
-def obtenir_reserves_usuari(idusuari: int):
-    time.sleep(DELAY_TIME)
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT reserves.*,materials.descripcio as descripcio,materials.imatge FROM reserves inner join materials on reserves.idmaterial=materials.id WHERE idusuari = %s", (idusuari,))
-    reserves = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    return reserves
-
-#4. Modificar Reserva (PUT)
-@app.put("/reserves/{idusuari}/{idmaterial}/{datareserva}")
-def modificar_reserva(idusuari: int, idmaterial: int, datareserva: str, reserva: Reserva):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    try:
-        cursor.execute(
-            "UPDATE reserves SET datafinal = %s WHERE idusuari = %s AND idmaterial = %s AND datareserva = %s",
-            (reserva.datafinal, idusuari, idmaterial, datareserva),
-        )
-        conn.commit()
-        if cursor.rowcount == 0:
-            raise HTTPException(status_code=404, detail="Reserva no trobada")
-    except Exception as e:
-        conn.rollback()
-        raise HTTPException(status_code=400, detail=str(e))
-    finally:
-        cursor.close()
-        conn.close()
-    return {"message": "Reserva actualitzada correctament"}
-
-#5. Eliminar Reserva (DELETE)
-
-@app.delete("/reserves/{idusuari}/{idmaterial}/{datareserva}")
-def eliminar_reserva(idusuari: int, idmaterial: int, datareserva: str):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    try:
-        cursor.execute(
-            "DELETE FROM reserves WHERE idusuari = %s AND idmaterial = %s AND datareserva = %s",
-            (idusuari, idmaterial, datareserva),
-        )
-        conn.commit()
-        if cursor.rowcount == 0:
-            raise HTTPException(status_code=404, detail="Reserva no trobada")
-    except Exception as e:
-        conn.rollback()
-        raise HTTPException(status_code=400, detail=str(e))
-    finally:
-        cursor.close()
-        conn.close()
-    return {"message": "Reserva eliminada correctament"}
+    return {"message": "Apuesta eliminada correctamente"}
