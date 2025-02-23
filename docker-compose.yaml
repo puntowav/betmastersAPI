@@ -5,7 +5,7 @@ services:
     build:
      context: .
      dockerfile: dockerfile
-    container_name: reservesapi
+    container_name: betMastersAPI
     restart: unless-stopped
     ports:
       - "443:443"  # HTTPS
