@@ -4,6 +4,7 @@ services:
   app:
     build:
      context: .
+     dockerfile: dockerfile
     container_name: reservesapi
     restart: unless-stopped
     ports:

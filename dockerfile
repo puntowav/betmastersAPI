@@ -18,6 +18,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY API /app/
 
 # Arranca uvicorn con SSL
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "443",
-     "--ssl-keyfile", "/app/ssl/key.pem",
-     "--ssl-certfile", "/app/ssl/cert.pem"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "443", "--ssl-keyfile", "/app/ssl/key.pem", "--ssl-certfile", "/app/ssl/cert.pem"]
