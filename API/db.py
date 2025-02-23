@@ -4,7 +4,7 @@ db_config = {
     'host': 'mariadb',
     'user': 'appuser',
     'password': 'maria-DB_Appuser',
-    'database': 'bestMasters',
+    'database': 'betMasters',
     'pool_name': 'mypool',
     'pool_size': 5
 }
