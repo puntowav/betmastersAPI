@@ -14,20 +14,32 @@ app = FastAPI()
 @app.post("/bets/")
 def crear_bet(bet: Bet):
     conn = get_db_connection()
-    cursor = conn.cursor()
+    cursor = conn.cursor(dictionary=True)
     try:
+        # Ejecutamos el INSERT, omitiendo el id porque es autoincrement
         cursor.execute(
-            "INSERT INTO bets (id, partido, team, bet, win) VALUES (%s, %s, %s, %s, %s)",
-            (bet.id, bet.partido, bet.team, bet.bet, bet.win),
+            "INSERT INTO bets (partido, team, bet, win) VALUES (%s, %s, %s, %s)",
+            (bet.partido, bet.team, bet.bet, bet.win),
         )
         conn.commit()
+        # Obtenemos el id generado
+        new_id = cursor.lastrowid
+        # Recuperamos la apuesta recién creada
+        cursor.execute("SELECT * FROM bets WHERE id = %s", (new_id,))
+        created_bet = cursor.fetchone()
     except Exception as e:
         conn.rollback()
         raise HTTPException(status_code=400, detail=str(e))
     finally:
         cursor.close()
         conn.close()
-    return {"message": "Apuesta creada correctamente"}
+    return {
+        "id": new_id,
+        "partido": created_bet["partido"],
+        "team": created_bet["team"],
+        "bet": created_bet["bet"],
+        "win": created_bet["win"]
+    }
 
 # Obtener todas las apuestas (GET)
 @app.get("/bets/")
@@ -74,7 +86,13 @@ def modificar_bet(bet_id: int, nueva_bet: Bet):
     finally:
         cursor.close()
         conn.close()
-    return {"message": "Apuesta modificada correctamente"}
+    return {
+        "id": bet_id,
+        "partido": nueva_bet.partido,
+        "team": nueva_bet.team,
+        "bet": nueva_bet.bet,
+        "win": nueva_bet.win
+    }
 
 # Eliminar apuesta (DELETE)
 @app.delete("/bets/{bet_id}")
